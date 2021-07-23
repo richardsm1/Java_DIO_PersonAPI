@@ -1,7 +1,7 @@
 package one.digitalinnovation.personapi.service;
 
-import one.digitalinnovation.personapi.dto.response.MessageResponseDTO;
 import one.digitalinnovation.personapi.dto.request.PersonDTO;
+import one.digitalinnovation.personapi.dto.response.MessageResponseDTO;
 import one.digitalinnovation.personapi.entity.Person;
 import one.digitalinnovation.personapi.exception.PersonNotFoundExecption;
 import one.digitalinnovation.personapi.mapper.PersonMapper;
@@ -10,23 +10,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class PersonService {
     private final PersonRepository personRepository;
+    private final PersonMapper personMapper = PersonMapper.INSTANCE;
 
     @Autowired
     public PersonService(PersonRepository personRepository) {
         this.personRepository = personRepository;
     }
 
-    private final PersonMapper personMapper = PersonMapper.INSTANCE;
-
     public MessageResponseDTO createPerson(PersonDTO personDTO) {
         Person personToSave = personMapper.toModel(personDTO);
-
         Person savedPerson = personRepository.save(personToSave);
         return createMessageResponse(savedPerson.getId(), "Created person with ID ");
     }
@@ -44,9 +41,16 @@ public class PersonService {
     }
 
     public PersonDTO findById(Long id) throws PersonNotFoundExecption {
-        Person person = personRepository.findById(id).orElseThrow(()-> new PersonNotFoundExecption(id));
-
-
+        Person person = verifyIfExists(id);
         return personMapper.toDTO(person);
+    }
+
+    private Person verifyIfExists(Long id) throws PersonNotFoundExecption {
+        return personRepository.findById(id).orElseThrow(() -> new PersonNotFoundExecption(id));
+    }
+
+    public void delete(Long id) throws PersonNotFoundExecption {
+        verifyIfExists(id);
+        personRepository.deleteById(id);
     }
 }
